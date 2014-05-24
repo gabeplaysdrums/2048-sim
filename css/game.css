@@ -1,0 +1,134 @@
+.game {
+  position: relative;
+  display: inline-block;
+  border: 1px solid lightgray;
+  margin: 5px;
+}
+
+.game.move-left {
+  border-left: 1px solid black;
+}
+.game.move-right {
+  border-right: 1px solid black;
+}
+.game.move-up {
+  border-top: 1px solid black;
+}
+.game.move-down{
+  border-bottom: 1px solid black;
+}
+
+.game .stats {
+  font-family: monospace;
+  font-size: 10pt;
+  padding: 5px;
+  display: none;
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  background-color: white;
+  border: 1px solid lightgray;
+}
+
+.game:hover .stats {
+  display: block;
+}
+
+.game td {
+  text-align: center;
+  vertical-align: middle;
+  width: 40px;
+  height: 40px;
+  font-family: monospace;
+  font-size: 8pt;
+  color: white;
+  border-radius: 5px;
+}
+
+.game td.v-2048:before {
+  content: "2048";
+}
+
+.game td.v-2048 {
+  background-color: rgba(0, 0, 51, 1.0);
+}
+
+.game td.v-1024:before {
+  content: "1024";
+}
+
+.game td.v-1024 {
+  background-color: rgba(0, 0, 51, 0.95);
+}
+
+.game td.v-512:before {
+  content: "512";
+}
+
+.game td.v-512 {
+  background-color: rgba(0, 0, 51, 0.90);
+}
+
+.game td.v-256:before {
+  content: "256";
+}
+
+.game td.v-256 {
+  background-color: rgba(0, 0, 51, 0.85);
+}
+
+.game td.v-128:before {
+  content: "128";
+}
+
+.game td.v-128 {
+  background-color: rgba(0, 0, 51, 0.80);
+}
+
+.game td.v-64:before {
+  content: "64";
+}
+
+.game td.v-64 {
+  background-color: rgba(0, 0, 51, 0.75);
+}
+
+.game td.v-32:before {
+  content: "32";
+}
+
+.game td.v-32 {
+  background-color: rgba(0, 0, 51, 0.70);
+}
+
+.game td.v-16:before {
+  content: "16";
+}
+
+.game td.v-16 {
+  background-color: rgba(0, 0, 51, 0.65);
+}
+
+.game td.v-8:before {
+  content: "8";
+}
+
+.game td.v-8 {
+  background-color: rgba(0, 0, 51, 0.60);
+}
+
+.game td.v-4:before {
+  content: "4";
+}
+
+.game td.v-4 {
+  background-color: rgba(0, 0, 51, 0.55);
+}
+
+.game td.v-2:before {
+  content: "2";
+}
+
+.game td.v-2 {
+  background-color: rgba(0, 0, 51, 0.50);
+}

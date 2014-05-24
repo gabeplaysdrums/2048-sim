@@ -2,8 +2,78 @@
 <html>
   <head>
     <title>2048 simulator</title>
+    <link rel="stylesheet" href="css/game.css" />
+    <script src="js/jquery-1.11.1.min.js"></script>
+    <script src="js/jsrender.min.js"></script>
+    <script src="js/game.js"></script>
+    <style type="text/css">
+
+    </style>
+    <script type="text/javascript">
+
+    $(function() {
+
+        for (var i=0; i < 18; i++)
+        {
+            var game = new GameEngine();
+            $("#games").append(game.elem());
+        }
+
+        window.setInterval(function() {
+
+            $.each($(".game"), function(i, elem) {
+
+                var moves = [];
+                var validMoves = elem.engine.validMoves();
+
+                for (dir in validMoves)
+                {
+                    if (validMoves[dir])
+                    {
+                        moves.push(dir);
+                    }
+                }
+
+                if (moves.length > 0)
+                {
+                    dir = moves[Math.floor(Math.random() * moves.length)];
+                    elem.engine.applyMove(dir);
+                }
+
+            });
+
+        }, 100);
+
+    });
+
+    </script>
   </head>
   <body>
-    
+    <div id="games">
+    </div>
+    <script id="game-template" type="text/x-jsrender">
+      <div class="game">
+        <div class="stats">
+          <div>moves: <span class="move-count">?</span></div>
+          <div>max value: <span class="max-value">?</span></div>
+          <div>sum values: <span class="sum-values">?</span></div>
+          <div>rate: <span class="progress-rate">?</span></div>
+        </div>
+        <table>
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+        </table>
+      </div>
+    </script>
   </body>
 </html>
