@@ -16,7 +16,61 @@
     </style>
     <script type="text/javascript">
 
+    var results = {};
+
     $(function() {
+
+        function PlayerStats()
+        {
+            var self = this;
+            var data = [];
+
+            this.report = function(score) {
+                data.push(score);
+                data.sort(function(a, b) { return a - b; });
+            }
+
+            this.min = function() {
+                return (data.length > 0) ? data[0] : null;
+            };
+
+            this.max = function() {
+                return (data.length > 0) ? data[data.length - 1] : null;
+            };
+
+            this.median = function() {
+
+                if (data.length === 0)
+                {
+                    return null;
+                }
+
+                var i = Math.floor(data.length / 2);
+
+                if (data.length % 2 === 0)
+                {
+                    return (data[i] + data[i + 1]) / 2;
+                }
+
+                return data[i];
+            };
+
+            this.mean = function() {
+
+                var sum = 0;
+
+                for (var i=0; i < data.length; i++)
+                {
+                    sum += data[i];
+                }
+
+                return sum / data.length;
+            };
+
+            this.count = function() {
+                return data.length;
+            };
+        }
 
         for (var i=0; i < 36; i++)
         {
@@ -24,7 +78,7 @@
                 
                 if (i < 6)
                     return new RandomPlayer();
-                else if (i < 12)
+                else if (i < 21)
                     return new PrecedencePlayer();
                 else
                     return new PrimaryDirectionPlayer();
@@ -42,16 +96,39 @@
 
             $.each($(".game"), function(i, elem) {
 
-                var dir = elem.player.chooseMove(elem.engine.state());
+                var stats = results[elem.player.name()];
 
-                if (dir)
+                if (stats && stats.count() >= 500)
                 {
-                    elem.engine.applyMove(dir);
+                    return true;
                 }
 
-                if (!best || elem.engine.state().score() > best.engine.state().score())
+                if (elem.engine.state().completed())
                 {
-                    best = elem;
+                    var name = elem.player.name();
+
+                    if (!results[name])
+                    {
+                        results[name] = new PlayerStats();
+                    }
+
+                    results[name].report(elem.engine.state().score());
+                    elem.engine.reset();
+                    elem.player.reset();
+                }
+                else
+                {
+                    var dir = elem.player.chooseMove(elem.engine.state());
+    
+                    if (dir)
+                    {
+                        elem.engine.applyMove(dir);
+                    }
+    
+                    if (!best || elem.engine.state().score() > best.engine.state().score())
+                    {
+                        best = elem;
+                    }
                 }
 
             });

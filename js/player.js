@@ -7,6 +7,8 @@ function Player(name)
     this.chooseMove = function(state) {
         throw "not implemented";
     };
+
+    this.reset = function() { };
 }
 
 function RandomPlayer()
@@ -70,14 +72,20 @@ function PrimaryDirectionPlayer()
 {
     Player.call(this, "primary");
 
-    var primary = Direction.Down;
+    var self = this;
+
+    var primary;
+    var resetSequence;
 
     var primaryDirs = [
         Direction.Down,
         Direction.Left,
     ];
 
-    var resetSequence = [];
+    this.reset = function() {
+        primary = Direction.Down;
+        resetSequence = [];
+    };
 
     this.chooseMove = function(state) {
 
@@ -146,4 +154,9 @@ function PrimaryDirectionPlayer()
         return null;
 
     };
+
+    // ctor
+    {
+        self.reset();
+    }
 }

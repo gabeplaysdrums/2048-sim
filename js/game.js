@@ -9,16 +9,13 @@ function GameEngine(label)
 {
     var self = this;
 
-    var $game = null;
-    var grid = [
-        [ 0, 0, 0, 0],
-        [ 0, 0, 0, 0],
-        [ 0, 0, 0, 0],
-        [ 0, 0, 0, 0],
-    ];
-    var moveCount = 0;
-    var maxValue = 0;
-    var state = null;
+    var grid;
+    var moveCount;
+    var maxValue;
+    var completed;
+
+    var $game;
+    var state;
 
     var MIN_POW = 1;      // 2^1 = 2
     var MAX_POW = 11;     // 2^11 = 2048
@@ -53,6 +50,11 @@ function GameEngine(label)
 
             });
         });
+
+        if (locations.length === 0)
+        {
+            return;
+        }
 
         // choose one of those locations at random
         var loc = locations[Math.floor(Math.random() * locations.length)];
@@ -169,6 +171,31 @@ function GameEngine(label)
     
         this.score = function() {
             return (moveCount > 0) ? self.state().sumValues() / moveCount + maxValue : 0;
+        };
+
+        this.completed = function() {
+
+            if (completed)
+            {
+                return true;
+            }
+
+            var validMoves = self.state().validMoves();
+            var moveCount = 0;
+            var dirs = [ Direction.Up, Direction.Down, Direction.Left, Direction.Right ];
+
+            for (var i=0; i < dirs.length; i++)
+            {
+                var dir = dirs[i];
+
+                if (validMoves[dir])
+                {
+                    moveCount++;
+                }
+            }
+
+            completed = (maxValue === Math.pow(2, MAX_POW) || moveCount === 0);
+            return completed;
         };
     }
 
@@ -310,6 +337,37 @@ function GameEngine(label)
         return state;
     };
 
+    this.reset = function() {
+
+        grid = [
+            [ 0, 0, 0, 0],
+            [ 0, 0, 0, 0],
+            [ 0, 0, 0, 0],
+            [ 0, 0, 0, 0],
+        ];
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                setCellValue(i, j, 0);
+            }
+        }
+
+        moveCount = 0;
+        maxValue = 0;
+        completed = false;
+
+        $game.find(".stats .move-count").text("?");
+        $game.find(".stats .max-value").text("?");
+        $game.find(".stats .sum-values").text("?");
+        $game.find(".stats .score").text("?");
+
+        // add initial cells
+        addRandom();
+        addRandom();
+    };
+
     // ctor
     {
         var $container = $("<div />").html($("#game-template").render());
@@ -320,8 +378,6 @@ function GameEngine(label)
 
         state = new GameState();
 
-        // add initial cells
-        addRandom();
-        addRandom();
+        self.reset();
     }
 }
