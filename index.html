@@ -6,43 +6,62 @@
     <script src="js/jquery-1.11.1.min.js"></script>
     <script src="js/jsrender.min.js"></script>
     <script src="js/game.js"></script>
+    <script src="js/player.js"></script>
     <style type="text/css">
+
+    .game.best {
+        background-color: yellow;
+    }
 
     </style>
     <script type="text/javascript">
 
     $(function() {
 
-        for (var i=0; i < 18; i++)
+        for (var i=0; i < 36; i++)
         {
-            var game = new GameEngine();
+            var player = (function() {
+                
+                if (i < 6)
+                    return new RandomPlayer();
+                else if (i < 12)
+                    return new PrecedencePlayer();
+                else
+                    return new PrimaryDirectionPlayer();
+
+            })(i);
+
+            var game = new GameEngine(player.name());
+            game.elem().prop("player", player);
             $("#games").append(game.elem());
         }
 
-        window.setInterval(function() {
+        function tick()
+        {
+            var best = null;
 
             $.each($(".game"), function(i, elem) {
 
-                var moves = [];
-                var validMoves = elem.engine.validMoves();
+                var dir = elem.player.chooseMove(elem.engine.state());
 
-                for (dir in validMoves)
+                if (dir)
                 {
-                    if (validMoves[dir])
-                    {
-                        moves.push(dir);
-                    }
+                    elem.engine.applyMove(dir);
                 }
 
-                if (moves.length > 0)
+                if (!best || elem.engine.state().score() > best.engine.state().score())
                 {
-                    dir = moves[Math.floor(Math.random() * moves.length)];
-                    elem.engine.applyMove(dir);
+                    best = elem;
                 }
 
             });
 
-        }, 100);
+            $(".game").removeClass("best");
+            $(best).addClass("best");
+        }
+
+        window.setInterval(tick, 50);
+        //$(window).click(tick);
 
     });
 
@@ -54,10 +73,11 @@
     <script id="game-template" type="text/x-jsrender">
       <div class="game">
         <div class="stats">
+          <div class="label"></div>
           <div>moves: <span class="move-count">?</span></div>
           <div>max value: <span class="max-value">?</span></div>
           <div>sum values: <span class="sum-values">?</span></div>
-          <div>rate: <span class="progress-rate">?</span></div>
+          <div>score: <span class="score">?</span></div>
         </div>
         <table>
           <tr>
