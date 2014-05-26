@@ -9,16 +9,90 @@
     <script src="js/player.js"></script>
     <style type="text/css">
 
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial;
+      font-size: 11pt;
+    }
+
     .game.best {
-        background-color: yellow;
+      background-color: yellow;
+    }
+
+    #controls {
+      position: fixed;
+      height: 100%;
+      top: 0;
+      left: 0;
+      display: block;
+    }
+
+    #controls-pane {
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.95);
+      width: 300px;
+      height: 100%;
+      overflow: auto;
+      border-right: 5px solid lightgray;
+      display: inline-block;
+    }
+
+    #controls-toggle {
+      display: inline-block;
+      background-color: lightgray;
+      vertical-align: top;
+      text-align: center;
+      padding: 5px;
+      padding-top: 20px;
+      padding-bottom: 20px;
+      padding-right: 8px;
+      margin-top: 5px;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      text-decoration: inherit;
+      font-family: monospace;
+      color: rgb(100, 100, 100);
+      font-weight: bold;
+    }
+
+    #controls-toggle:before {
+      content: "<<";
+    }
+
+    #controls-toggle.collapsed:before {
+      content: ">>";
+    }
+
+    #games {
+      padding-left: 30px;
+    }
+
+    #leaderboard-entries .entry .name {
+      font-weight: bold;
+    }
+
+    #leaderboard-entries .entry .score {
+      padding-left: 10px;
+      text-align: right;
     }
 
     </style>
     <script type="text/javascript">
 
     var results = {};
+    var leaderboard = [];
 
     $(function() {
+
+        function toggleControls()
+        {
+            $("#controls-pane").toggle();
+            $("#controls-toggle").toggleClass("collapsed");
+        }
+
+        $("#controls-toggle").click(toggleControls);
+        toggleControls();
 
         function PlayerStats()
         {
@@ -90,18 +164,24 @@
             $("#games").append(game.elem());
         }
 
+        $.views.tags("decimal3", function(value) {
+            return value.toFixed(3);
+        });
+
         function tick()
         {
             var best = null;
 
             $.each($(".game"), function(i, elem) {
 
+                /*
                 var stats = results[elem.player.name()];
 
                 if (stats && stats.count() >= 500)
                 {
                     return true;
                 }
+                */
 
                 if (elem.engine.state().completed())
                 {
@@ -113,6 +193,26 @@
                     }
 
                     results[name].report(elem.engine.state().score());
+
+                    leaderboard.push({
+                        "name": name,
+                        "score": elem.engine.state().score(),
+                    });
+                    
+                    leaderboard.sort(function(a, b) { return b["score"] - a["score"]; });
+                    $("#leaderboard-entries").empty();
+
+                    for (var i=0; i < leaderboard.length && i < 25; i++)
+                    {
+                        var $container = $("<div />")
+                            .html($("#leaderboard-entry-template")
+                            .render(leaderboard[i]));
+                        var $entry = $container.children().first();
+                        $("#leaderboard-entries").append($entry);
+                    }
+
+                    $("#completed-count").text(leaderboard.length);
+
                     elem.engine.reset();
                     elem.player.reset();
                 }
@@ -147,6 +247,20 @@
   <body>
     <div id="games">
     </div>
+    <div id="controls">
+      <div id="controls-pane">
+        <div id="leaderboard">
+          <h3>Leaderboard (Top 25 of <span id="completed-count">0</span>)</h3>
+          <table id="leaderboard-entries"></table>
+        </div>
+      </div><a id="controls-toggle" href="javascript:void(0);"></a>
+    </div>
+    <script id="leaderboard-entry-template" type="text/x-jsrender">
+      <tr class="entry">
+        <td class="name">{{:name}}</td>
+        <td class="score">{{decimal3 score /}}</td>
+      </tr>
+    </script>
     <script id="game-template" type="text/x-jsrender">
       <div class="game">
         <div class="stats">
