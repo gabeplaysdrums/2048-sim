@@ -192,11 +192,11 @@
                         results[name] = new PlayerStats();
                     }
 
-                    results[name].report(elem.engine.state().score());
+                    results[name].report(elem.engine.score());
 
                     leaderboard.push({
                         "name": name,
-                        "score": elem.engine.state().score(),
+                        "score": elem.engine.score(),
                     });
                     
                     leaderboard.sort(function(a, b) { return b["score"] - a["score"]; });
@@ -225,7 +225,7 @@
                         elem.engine.applyMove(dir);
                     }
     
-                    if (!best || elem.engine.state().score() > best.engine.state().score())
+                    if (!best || elem.engine.score() > best.engine.score())
                     {
                         best = elem;
                     }

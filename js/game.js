@@ -5,23 +5,198 @@ var Direction = {
   "Right": "right",
 };
 
-function GameEngine(label)
+var MIN_POW = 1;      // 2^1 = 2
+var MAX_POW = 11;     // 2^11 = 2048
+var GRID_SIZE = 4;
+
+function GameState(grid)
 {
     var self = this;
 
-    var grid;
+    this.grid = function() {
+
+        var gridCopy = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ];
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                gridCopy[i][j] = grid[i][j];
+            }
+        }
+
+        return gridCopy;
+    };
+
+    this.isBlank = function(i, j) {
+        return grid[i][j] === 0;
+    };
+
+    this.value = function(i, j) {
+        return self.isBlank(i, j) ? 0 : Math.pow(2, grid[i][j]);
+    };
+
+    this.each = function(callback) {
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                if (callback(i, j, self.value(i, j)) === false)
+                {
+                    break;
+                }
+            }
+        }
+    };
+
+    this.maxValue = function() {
+
+        var maxValue = 0;
+
+        self.each(function(i, j, value) {
+            maxValue = Math.max(maxValue, value);
+        });
+
+        return maxValue;
+    };
+
+    this.sumValues = function() {
+        
+        var sum = 0;
+
+        self.each(function(i, j, value) {
+            sum += value;
+        });
+
+        return sum;
+    };
+
+    this.tiles = function() {
+
+        var tiles = [];
+
+        self.each(function(i, j, value) {
+            if (value !== 0)
+            {
+                tiles.push([i, j, value]);
+            }
+        });
+
+        return tiles;
+    };
+
+    this.blanks = function() {
+
+        var blanks = [];
+
+        self.each(function(i, j, value) {
+            if (value === 0)
+            {
+                blanks.push([i, j]);
+            }
+        });
+
+        return blanks;
+    };
+
+    this.canMoveTo = function(value, i, j) {
+        return (
+            i >= 0 && i < GRID_SIZE && 
+            j >= 0 && j < GRID_SIZE && 
+            (self.isBlank(i, j) || self.value(i, j) === value)
+        );
+    };
+
+    this.validMoves = function() {
+
+        var moves = {};
+        moves[Direction.Up] = false;
+        moves[Direction.Down] = false;
+        moves[Direction.Left] = false;
+        moves[Direction.Right] = false;
+
+        self.each(function(i, j, value) {
+            if (value === 0)
+            {
+                // continue
+                return true;
+            }
+
+            if (i > 0 && self.canMoveTo(value, i - 1, j))
+            {
+                moves[Direction.Up] = true;
+            }
+
+            if (i < GRID_SIZE - 1 && self.canMoveTo(value, i + 1, j))
+            {
+                moves[Direction.Down] = true;
+            }
+
+            if (j > 0 && self.canMoveTo(value, i, j - 1))
+            {
+                moves[Direction.Left] = true;
+            }
+
+            if (j < GRID_SIZE - 1 && self.canMoveTo(value, i, j + 1))
+            {
+                moves[Direction.Right] = true;
+            }
+
+            if (moves[Direction.Up] && 
+                moves[Direction.Down] && 
+                moves[Direction.Left] && 
+                moves[Direction.Right])
+            {
+                // break
+                return false;
+            }
+        });
+
+        return moves;
+    };
+
+    this.validMoveCount = function() {
+
+        var count = 0;
+        var validMoves = self.validMoves();
+
+        for (k in Direction)
+        {
+            if (validMoves[Direction[k]])
+            {
+                count++;
+            }
+        }
+
+        return count;
+    };
+
+    this.completed = function() {
+        return self.maxValue() === Math.pow(2, MAX_POW) || self.validMoveCount() === 0;
+    };
+}
+
+function GameEngine(label, initialGrid)
+{
+    var self = this;
+
+    var grid = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+    ];
+    var state = new GameState(grid);
     var moveCount;
-    var maxValue;
-    var completed;
-
     var $game;
-    var state;
 
-    var MIN_POW = 1;      // 2^1 = 2
-    var MAX_POW = 11;     // 2^11 = 2048
-    var GRID_SIZE = 4;
-
-    function setCellValue(i, j, pow)
+    function setCell(i, j, pow)
     {
         grid[i][j] = pow;
         var $cell = $game.find("tr:eq(" + i + ") td:eq(" + j + ")");
@@ -32,24 +207,13 @@ function GameEngine(label)
         }
 
         $cell.addClass("v-" + self.state().value(i, j));
-        maxValue = Math.max(maxValue, self.state().value(i, j));
+        return $cell;
     }
 
     function addRandom()
     {
-        // find all locations that don't have a pow
-        var locations = [];
-
-        $.each(grid, function(i, row) {
-            $.each(row, function(j, pow) {
-
-                if (pow == 0)
-                {
-                    locations.push([ i, j ]);
-                }
-
-            });
-        });
+        // find blank locations
+        var locations = state.blanks();
 
         if (locations.length === 0)
         {
@@ -63,141 +227,31 @@ function GameEngine(label)
         var pow = (Math.random() < 0.95) ? 1 : 2;
 
         // set the value
-        setCellValue(loc[0], loc[1], pow);
+        var $cell = setCell(loc[0], loc[1], pow);
+
+        $cell.addClass("new");
     }
 
-    function canMoveTo(pow, i, j)
+    function updateStats()
     {
-        return (
-            i >= 0 && i < GRID_SIZE && 
-            j >= 0 && j < GRID_SIZE && 
-            (grid[i][j] === 0 || grid[i][j] === pow)
-        );
+        $game.find(".stats .move-count").text(self.moveCount());
+        $game.find(".stats .max-value").text(state.maxValue());
+        $game.find(".stats .sum-values").text(state.sumValues());
+        $game.find(".stats .score").text(self.score().toFixed(3));
     }
 
-    function GameState()
+    function clearNew()
     {
-        this.value = function (i, j) {
-            return Math.pow(2, grid[i][j]);
-        };
-    
-        this.validMoves = function() {
-            var moves = {};
-            moves[Direction.Up] = false;
-            moves[Direction.Down] = false;
-            moves[Direction.Left] = false;
-            moves[Direction.Right] = false;
-    
-            $.each(grid, function(i, row) {
-                $.each(row, function(j, pow) {
-    
-                    if (pow === 0)
-                    {
-                        // continue
-                        return true;
-                    }
-    
-                    if (pow === MAX_POW)
-                    {
-                        moves[Direction.Up] = false;
-                        moves[Direction.Down] = false;
-                        moves[Direction.Left] = false;
-                        moves[Direction.Right] = false;
-                        return false;
-                    }
-    
-                    if (i > 0 && canMoveTo(pow, i - 1, j))
-                    {
-                        moves[Direction.Up] = true;
-                    }
-    
-                    if (i < GRID_SIZE - 1 && canMoveTo(pow, i + 1, j))
-                    {
-                        moves[Direction.Down] = true;
-                    }
-    
-                    if (j > 0 && canMoveTo(pow, i, j - 1))
-                    {
-                        moves[Direction.Left] = true;
-                    }
-    
-                    if (j < GRID_SIZE - 1 && canMoveTo(pow, i, j + 1))
-                    {
-                        moves[Direction.Right] = true;
-                    }
-    
-                    if (moves[Direction.Up] && 
-                        moves[Direction.Down] && 
-                        moves[Direction.Left] && 
-                        moves[Direction.Right])
-                    {
-                        // break
-                        return false;
-                    }
-    
-                });
-            });
-    
-            return moves;
-        };
-    
-        this.maxValue = function() {
-            return maxValue;
-        };
-    
-        this.sumValues = function() {
-            var sum = 0;
-    
-            $.each(grid, function(i, row) {
-                $.each(row, function(j, pow) {
-    
-                    if (pow === 0)
-                    {
-                        // continue
-                        return true;
-                    }
-    
-                    sum += Math.pow(2, pow);
-    
-                });
-            });
-    
-            return sum;
-        };
-
-        this.moveCount = function() {
-            return moveCount;
-        };
-    
-        this.score = function() {
-            return (moveCount > 0) ? self.state().sumValues() / moveCount + maxValue : 0;
-        };
-
-        this.completed = function() {
-
-            if (completed)
-            {
-                return true;
-            }
-
-            var validMoves = self.state().validMoves();
-            var moveCount = 0;
-            var dirs = [ Direction.Up, Direction.Down, Direction.Left, Direction.Right ];
-
-            for (var i=0; i < dirs.length; i++)
-            {
-                var dir = dirs[i];
-
-                if (validMoves[dir])
-                {
-                    moveCount++;
-                }
-            }
-
-            completed = (maxValue === Math.pow(2, MAX_POW) || moveCount === 0);
-            return completed;
-        };
+        $game.find("td").removeClass("new");
     }
+
+    this.moveCount = function() {
+        return moveCount;
+    };
+    
+    this.score = function() {
+        return (moveCount > 0) ? self.state().sumValues() / moveCount + state.maxValue() : 0;
+    };
 
     this.elem = function() {
         return $game;
@@ -237,6 +291,7 @@ function GameEngine(label)
         function move(i, j)
         {
             var pow = grid[i][j];
+            var value = state.value(i, j);
 
             if (pow === 0)
             {
@@ -246,15 +301,15 @@ function GameEngine(label)
             var di = i + delta[0];
             var dj = j + delta[1];
 
-            if (canMoveTo(pow, di, dj))
+            if (state.canMoveTo(value, di, dj))
             {
                 if (grid[di][dj] === 0)
                 {
-                    setCellValue(di, dj, pow);
+                    setCell(di, dj, pow);
                 }
                 else if (!combo[i][j] && !combo[di][dj])
                 {
-                    setCellValue(di, dj, pow + 1);
+                    setCell(di, dj, pow + 1);
                     combo[i][j] = true;
                 }
                 else
@@ -263,7 +318,7 @@ function GameEngine(label)
                 }
 
                 combo[di][dj] = combo[i][j];
-                setCellValue(i, j, 0);
+                setCell(i, j, 0);
                 combo[i][j] = false;
 
                 done = false;
@@ -322,13 +377,10 @@ function GameEngine(label)
         });
         $game.addClass("move-" + dir);
 
+        clearNew();
         addRandom();
         moveCount++;
-
-        $game.find(".stats .move-count").text(self.state().moveCount());
-        $game.find(".stats .max-value").text(self.state().maxValue());
-        $game.find(".stats .sum-values").text(self.state().sumValues());
-        $game.find(".stats .score").text(self.state().score().toFixed(3));
+        updateStats();
 
         return true;
     };
@@ -339,33 +391,24 @@ function GameEngine(label)
 
     this.reset = function() {
 
-        grid = [
-            [ 0, 0, 0, 0],
-            [ 0, 0, 0, 0],
-            [ 0, 0, 0, 0],
-            [ 0, 0, 0, 0],
-        ];
-
         for (var i=0; i < GRID_SIZE; i++)
         {
             for (var j=0; j < GRID_SIZE; j++)
             {
-                setCellValue(i, j, 0);
+                setCell(i, j, initialGrid ? initialGrid[i][j] : 0);
             }
         }
 
         moveCount = 0;
-        maxValue = 0;
-        completed = false;
 
-        $game.find(".stats .move-count").text("?");
-        $game.find(".stats .max-value").text("?");
-        $game.find(".stats .sum-values").text("?");
-        $game.find(".stats .score").text("?");
+        if (!initialGrid)
+        {
+            clearNew();
+            addRandom();
+            addRandom();
+        }
 
-        // add initial cells
-        addRandom();
-        addRandom();
+        updateStats();
     };
 
     // ctor
@@ -373,11 +416,7 @@ function GameEngine(label)
         var $container = $("<div />").html($("#game-template").render());
         $game = $container.children().first();
         $game.prop("engine", self);
-
         $game.find(".stats .label").text(label);
-
-        state = new GameState();
-
         self.reset();
     }
 }

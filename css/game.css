@@ -49,6 +49,10 @@
   border-radius: 5px;
 }
 
+.game td.new {
+  color: yellow;
+}
+
 .game td.v-2048:before {
   content: "2048";
 }
