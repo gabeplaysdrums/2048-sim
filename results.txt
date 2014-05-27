@@ -6,3 +6,9 @@ p("precedence")
 [66.05797101449275, 514.1515151515151, 203.8459129809247, 258.07103942652327]
 p("primary")
 [34.076190476190476, 514.1276595744681, 168.26770344805686, 130.13664596273293]
+
+
+function p(name){ return [ results[name].min(), results[name].max(), results[name].mean(), results[name].median(), results[name].count() ]; }
+undefined
+p("snake")
+[34.205128205128204, 2050.1404958677685, 821.1172944847964, 1026.0734068304869, 4052]

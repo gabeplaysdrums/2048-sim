@@ -53,6 +53,22 @@
   color: yellow;
 }
 
+.game td.v-8192:before {
+  content: "8192";
+}
+
+.game td.v-8192 {
+  background-color: rgba(0, 0, 51, 1.0);
+}
+
+.game td.v-4096:before {
+  content: "4096";
+}
+
+.game td.v-4096 {
+  background-color: rgba(0, 0, 51, 1.0);
+}
+
 .game td.v-2048:before {
   content: "2048";
 }

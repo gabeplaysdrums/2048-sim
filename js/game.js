@@ -6,7 +6,7 @@ var Direction = {
 };
 
 var MIN_POW = 1;      // 2^1 = 2
-var MAX_POW = 11;     // 2^11 = 2048
+var MAX_POW = 13;     // 2^13 = 8192
 var GRID_SIZE = 4;
 
 function GameState(grid)
@@ -194,7 +194,72 @@ function GameState(grid)
     };
 
     this.completed = function() {
-        return self.maxValue() === Math.pow(2, MAX_POW) || self.validMoveCount() === 0;
+        return self.validMoveCount() === 0;
+    };
+
+    this.nearestMatch = function(i, j) {
+
+        var match = null;
+        var matchDist = GRID_SIZE * GRID_SIZE;
+        var value = self.value(i, j);
+        
+        function d(i, j, di, dj)
+        {
+            return Math.abs(i - di) + Math.abs(j - dj);
+        }
+
+        if (value !== 0)
+        {
+            self.each(function(di, dj, dvalue) {
+
+                if (i === di && j === dj)
+                {
+                    return true;
+                }
+    
+                if (value === dvalue)
+                {
+                    var dist = d(i, j, di, dj);
+    
+                    if (dist < matchDist)
+                    {
+                        match = [di, dj];
+                        matchDist = dist;
+                    }
+                }
+            });
+        }
+
+        return {
+            "location": match,
+            "distance": matchDist,
+        };
+
+    };
+
+    this.highest = function() {
+
+        var set = {};
+        
+        self.each(function(i, j, value) {
+
+            if (!set[value])
+            {
+                set[value] = true;
+            }
+
+        });
+
+        var list = [];
+
+        for (var k in set)
+        {
+            list.push(parseInt(k));
+        }
+
+        list.sort(function(a, b) { return b - a; });
+
+        return list;
     };
 }
 
@@ -402,7 +467,7 @@ function GameEngine(label, initialGrid, render)
             }
             else if (dir === Direction.Up)
             {
-                for (var i = 0; i < GRID_SIZE - 1; i++)
+                for (var i = 0; i < GRID_SIZE; i++)
                 {
                     for (var j=0; j < GRID_SIZE; j++)
                     {

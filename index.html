@@ -31,7 +31,7 @@
     #controls-pane {
       padding: 10px;
       background-color: rgba(255, 255, 255, 0.95);
-      width: 300px;
+      width: 400px;
       height: 100%;
       overflow: auto;
       border-right: 5px solid lightgray;
@@ -68,12 +68,29 @@
       padding-left: 30px;
     }
 
+    #leaderboard th {
+      text-align: left;
+      text-decoration: underline;
+      padding-right: 10px;
+    }
+
     #leaderboard-entries .entry .name {
       font-weight: bold;
     }
 
+    #leaderboard-entries .entry td {
+      padding-right: 10px;
+    }
+
     #leaderboard-entries .entry .score {
-      padding-left: 10px;
+      text-align: right;
+    }
+
+    #leaderboard-entries .entry .move-count {
+      text-align: right;
+    }
+
+    #leaderboard-entries .entry .highest-tiles {
       text-align: right;
     }
 
@@ -146,17 +163,9 @@
             };
         }
 
-        for (var i=0; i < 12; i++)
+        for (var i=0; i < 24; i++)
         {
-            var player = (function() {
-                
-                if (i < 6)
-                    return new SumHunterPlayer();
-                else
-                    return new PrecedencePlayer();
-
-            })(i);
-
+            var player = new SnakePlayer();
             var game = new GameEngine(player.name());
             game.elem().prop("player", player);
             $("#games").append(game.elem());
@@ -192,9 +201,14 @@
 
                     results[name].report(elem.engine.score());
 
+                    var h = elem.engine.state().highest();
+
                     leaderboard.push({
                         "name": name,
                         "score": elem.engine.score(),
+                        "moveCount": elem.engine.moveCount(),
+                        "maxValue": elem.engine.state().maxValue(),
+                        "highest": [ h[0], h[1], h[2] ].join(", "),
                     });
                     
                     leaderboard.sort(function(a, b) { return b["score"] - a["score"]; });
@@ -249,7 +263,16 @@
       <div id="controls-pane">
         <div id="leaderboard">
           <h3>Leaderboard (Top 25 of <span id="completed-count">0</span>)</h3>
-          <table id="leaderboard-entries"></table>
+          <table>
+            <tr>
+              <th>player</th>
+              <th>score</th>
+              <th>moves</th>
+              <th>highest</th>
+            </tr>
+            <tbody id="leaderboard-entries">
+            </tbody>
+          </table>
         </div>
       </div><a id="controls-toggle" href="javascript:void(0);"></a>
     </div>
@@ -257,6 +280,8 @@
       <tr class="entry">
         <td class="name">{{:name}}</td>
         <td class="score">{{decimal3 score /}}</td>
+        <td class="move-count">{{:moveCount}}</td>
+        <td class="highest-tiles">{{:highest}}</td>
       </tr>
     </script>
     <script id="game-template" type="text/x-jsrender">

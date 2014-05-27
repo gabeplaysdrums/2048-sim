@@ -68,6 +68,69 @@ function PrecedencePlayer()
     };
 }
 
+function SnakePlayer()
+{
+    Player.call(this, "snake");
+
+    var self = this;
+    var precedence = PrecedencePlayer();
+
+    var dirs = [
+        Direction.Down,
+        Direction.Left,
+        Direction.Right,
+        Direction.Up,
+    ];
+
+    var weights = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [40, 30, 20, 10],
+        [100, 200, 300, 400],
+    ];
+
+    this.chooseMove = function(state) {
+
+        var validMoves = state.validMoves();
+        var outcomes = [];
+
+        function score(state_)
+        {
+            var sum = 0;
+
+            state_.each(function(i, j, value) {
+                sum += weights[i][j] * value + 100 * value / state_.nearestMatch(i, j).distance;
+            });
+
+            return sum;
+        }
+
+        for (var i=0; i < dirs.length; i++)
+        {
+            var dir = dirs[i];
+
+            if (validMoves[dir])
+            {
+                var engine = new GameEngine(null, state.grid(), false);
+                engine.applyMove(dir, false);
+                outcomes.push({
+                    "dir": dir,
+                    "score": score(engine.state()),
+                });
+            }
+        }
+
+        if (outcomes.length > 0)
+        {
+            outcomes.sort(function(a, b) { return b.score - a.score; });
+            return outcomes[0].dir;
+        }
+
+        return precedence.chooseMove(state);
+
+    };
+}
+
 function SumHunterPlayer()
 {
     Player.call(this, "sum-hunter");
