@@ -77,6 +77,22 @@ function GameState(grid)
         return sum;
     };
 
+    this.weightedSumValues = function() {
+
+        var sum = 0;
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                sum += grid[i][j] * self.value(i, j);
+            }
+        }
+
+        return sum;
+
+    };
+
     this.tiles = function() {
 
         var tiles = [];
@@ -182,9 +198,14 @@ function GameState(grid)
     };
 }
 
-function GameEngine(label, initialGrid)
+function GameEngine(label, initialGrid, render)
 {
     var self = this;
+
+    if (render === undefined)
+    {
+        render = true;
+    }
 
     var grid = [
         [0, 0, 0, 0],
@@ -199,15 +220,21 @@ function GameEngine(label, initialGrid)
     function setCell(i, j, pow)
     {
         grid[i][j] = pow;
-        var $cell = $game.find("tr:eq(" + i + ") td:eq(" + j + ")");
 
-        for (var pow = MIN_POW; pow <= MAX_POW; pow++)
+        if (render)
         {
-            $cell.removeClass("v-" + Math.pow(2, pow))
+            var $cell = $game.find("tr:eq(" + i + ") td:eq(" + j + ")");
+    
+            for (var pow = MIN_POW; pow <= MAX_POW; pow++)
+            {
+                $cell.removeClass("v-" + Math.pow(2, pow))
+            }
+    
+            $cell.addClass("v-" + self.state().value(i, j));
+            return $cell;
         }
 
-        $cell.addClass("v-" + self.state().value(i, j));
-        return $cell;
+        return null;
     }
 
     function addRandom()
@@ -229,20 +256,29 @@ function GameEngine(label, initialGrid)
         // set the value
         var $cell = setCell(loc[0], loc[1], pow);
 
-        $cell.addClass("new");
+        if (render)
+        {
+            $cell.addClass("new");
+        }
     }
 
     function updateStats()
     {
-        $game.find(".stats .move-count").text(self.moveCount());
-        $game.find(".stats .max-value").text(state.maxValue());
-        $game.find(".stats .sum-values").text(state.sumValues());
-        $game.find(".stats .score").text(self.score().toFixed(3));
+        if (render)
+        {
+            $game.find(".stats .move-count").text(self.moveCount());
+            $game.find(".stats .max-value").text(state.maxValue());
+            $game.find(".stats .sum-values").text(state.sumValues());
+            $game.find(".stats .score").text(self.score().toFixed(3));
+        }
     }
 
     function clearNew()
     {
-        $game.find("td").removeClass("new");
+        if (render)
+        {
+            $game.find("td").removeClass("new");
+        }
     }
 
     this.moveCount = function() {
@@ -257,7 +293,12 @@ function GameEngine(label, initialGrid)
         return $game;
     };
 
-    this.applyMove = function(dir) {
+    this.applyMove = function(dir, addNew) {
+
+        if (addNew === undefined)
+        {
+            addNew = true;
+        }
 
         if (!self.state().validMoves()[dir])
         {
@@ -372,13 +413,20 @@ function GameEngine(label, initialGrid)
         }
         while (!done);
 
-        $.each([ Direction.Up, Direction.Down, Direction.Left, Direction.Right], function(i, dir) {
-            $game.removeClass("move-" + dir);
-        });
-        $game.addClass("move-" + dir);
+        if (render)
+        {
+            $.each([ Direction.Up, Direction.Down, Direction.Left, Direction.Right], function(i, dir) {
+                $game.removeClass("move-" + dir);
+            });
+            $game.addClass("move-" + dir);
+        }
 
-        clearNew();
-        addRandom();
+        if (addNew)
+        {
+            clearNew();
+            addRandom();
+        }
+
         moveCount++;
         updateStats();
 
@@ -413,10 +461,14 @@ function GameEngine(label, initialGrid)
 
     // ctor
     {
-        var $container = $("<div />").html($("#game-template").render());
-        $game = $container.children().first();
-        $game.prop("engine", self);
-        $game.find(".stats .label").text(label);
+        if (render)
+        {
+            var $container = $("<div />").html($("#game-template").render());
+            $game = $container.children().first();
+            $game.prop("engine", self);
+            $game.find(".stats .label").text(label);
+        }
+
         self.reset();
     }
 }

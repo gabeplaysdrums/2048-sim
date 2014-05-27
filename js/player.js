@@ -68,6 +68,52 @@ function PrecedencePlayer()
     };
 }
 
+function SumHunterPlayer()
+{
+    Player.call(this, "sum-hunter");
+
+    var self = this;
+
+    var dirs = [
+        Direction.Down,
+        Direction.Left,
+        Direction.Right,
+    ];
+
+    this.chooseMove = function(state) {
+
+        var outcomes = [];
+        var validMoves = state.validMoves();
+        var engine = new GameEngine(null, state.grid());
+
+        for (var i=0; i < dirs.length; i++)
+        {
+            var dir = dirs[i];
+
+            if (validMoves[dir])
+            {
+                engine.reset();
+                engine.applyMove(dir, false);
+                outcomes.push({ "dir": dir, "sum": engine.state().weightedSumValues() });
+            }
+        }
+
+        if (outcomes.length > 0)
+        {
+            outcomes.sort(function(a, b) { return b.sum - a.sum; });
+            return outcomes[0].dir;
+        }
+
+        if (validMoves[Direction.Up])
+        {
+            return Direction.Up;
+        }
+
+        return null;
+
+    };
+}
+
 function PrimaryDirectionPlayer()
 {
     Player.call(this, "primary");

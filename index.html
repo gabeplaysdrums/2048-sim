@@ -146,16 +146,14 @@
             };
         }
 
-        for (var i=0; i < 36; i++)
+        for (var i=0; i < 12; i++)
         {
             var player = (function() {
                 
                 if (i < 6)
-                    return new RandomPlayer();
-                else if (i < 21)
-                    return new PrecedencePlayer();
+                    return new SumHunterPlayer();
                 else
-                    return new PrimaryDirectionPlayer();
+                    return new PrecedencePlayer();
 
             })(i);
 
@@ -237,7 +235,7 @@
             $(best).addClass("best");
         }
 
-        window.setInterval(tick, 50);
+        window.setInterval(tick, 0);
         //$(window).click(tick);
 
     });
