@@ -338,6 +338,11 @@ function GeneticPlayer(genes)
         }
     }
 
+    function randomWeight()
+    {
+        return 100 * Math.random();
+    }
+
     function randomGenes()
     {
         var genes = [];
@@ -354,15 +359,13 @@ function GeneticPlayer(genes)
         {
             for (var j=0; j < GRID_SIZE; j++)
             {
-                var w = 100 * Math.random();
-                genes.push(w);
+                genes.push(randomWeight());
             }
         }
 
         for (var i=0; i < MAX_POW; i++)
         {
-            var w = 100 * Math.random();
-            genes.push(w);
+            genes.push(randomWeight());
         }
 
         return genes;
@@ -448,19 +451,56 @@ function GeneticPlayer(genes)
         return genes;
     };
 
-    this.mate = function(player) {
+    this.mate = function(player, crossoverRate, mutationRate) {
 
-        var childGenes = copyArray(self.genes());
+        if (crossoverRate === undefined)
+        {
+            crossoverRate = 1;
+        }
+
+        if (mutationRate === undefined)
+        {
+            mutationRate = 0;
+        }
+
         var playerGenes = player.genes();
 
         var offset = DIRECTIONS.length;
-        var index = offset + Math.floor(Math.random() * (childGenes.length - offset));
+        var index = offset;
 
-        for (var i=index; i < childGenes.length; i++)
+        if (Math.random() < crossoverRate)
         {
-            childGenes[i] = playerGenes[i];
+            index += Math.floor(Math.random() * (playerGenes.length - offset));
         }
 
-        return new GeneticPlayer(childGenes);
+        var childGenes = [
+            copyArray(playerGenes),
+            copyArray(self.genes()),
+        ];
+        
+        for (var k=0; k < childGenes.length; k++)
+        {
+            for (var i=index; i < childGenes[k].length; i++)
+            {
+                childGenes[k][i] = playerGenes[i];
+            }
+    
+            for (var i=offset; i < childGenes[k].length; i++)
+            {
+                if (Math.random() < mutationRate)
+                {
+                    childGenes[k][i] = randomWeight();
+                }
+            }
+        }
+
+        var children = [];
+
+        for (var i=0; i < childGenes.length; i++)
+        {
+            children.push(new GeneticPlayer(childGenes[i]));
+        }
+
+        return children;
     };
 }

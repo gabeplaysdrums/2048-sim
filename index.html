@@ -164,7 +164,7 @@
             };
         }
 
-        function RunSimulation(player, callback)
+        function runSimulation(player, callback)
         {
             var NUM_GAMES = 24;
             var completedCount = 0;
@@ -252,26 +252,83 @@
         window.setInterval(tick, 0);
         //$(window).click(tick);
 
-        var player = null;
+        var POPULATION_SIZE = 10;
+        var CROSSOVER_RATE = 0.7;
+        var MUTATION_RATE = 0.01;
 
-        function nextSimulation()
+        var population = [];
+
+        for (var i=0; i < POPULATION_SIZE; i++)
         {
-            player = new GeneticPlayer();
-
-            RunSimulation(player, function(player, stats) {
-                console.log(
-                    player.name() + 
-                    ": min= " + stats.min().toFixed(3) +
-                    ", mean= " + stats.mean().toFixed(3) + 
-                    ", max= " + stats.max().toFixed(3) +
-                    ", median= " + stats.median().toFixed(3)
-                );
-    
-                window.setTimeout(nextSimulation(), 0);
+            population.push({
+                "player": new GeneticPlayer(),
+                "fitness": 0,
             });
         }
 
-        nextSimulation();
+        function breed()
+        {
+            var newPopulation = [];
+
+            population.sort(function(a, b) { return b.fitness - a.fitness; });
+            newPopulation.push(population[0]);
+
+            while (newPopulation.length < POPULATION_SIZE)
+            {
+                var male = chooseFittest(population).player;
+                var female = chooseFittest(population).player;
+                var children = male.mate(female, CROSSOVER_RATE, MUTATION_RATE);
+
+                while (children.length > 0)
+                {
+                    newPopulation.push({
+                        "player": children[0],
+                        "fitness": 0,
+                    });
+                    children.shift();
+                }
+            }
+
+            population = newPopulation;
+        }
+
+        function nextGeneration(genIndex)
+        {
+            console.log("----- Generation " + genIndex + " -----");
+    
+            function nextSimulation(popIndex)
+            {
+                var player = population[popIndex].player;
+    
+                runSimulation(player, function(player, stats) {
+                    console.log(
+                        player.name() + 
+                        ": min= " + stats.min().toFixed(3) +
+                        ", mean= " + stats.mean().toFixed(3) + 
+                        ", max= " + stats.max().toFixed(3) +
+                        ", median= " + stats.median().toFixed(3)
+                    );
+    
+                    population[popIndex].fitness = stats.mean();
+                    popIndex++;
+    
+                    if (popIndex < population.length)
+                    {
+                        window.setTimeout(function(){ nextSimulation(popIndex); }, 0);
+                    }
+                    else
+                    {
+                        genIndex++;
+                        breed();
+                        window.setTimeout(function() { nextGeneration(genIndex); }, 0);
+                    }
+                });
+            }
+    
+            nextSimulation(0);
+        }
+
+        nextGeneration(0);
 
     });
 
