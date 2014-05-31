@@ -170,15 +170,24 @@
             var completedCount = 0;
             var stats = new StatsCollection();
 
+            var render = $("#render-games").is(":checked");
             $("#games").empty();
 
             for (var i=0; i < NUM_GAMES; i++)
             {
-                var game = new GameEngine(player.name());
-                game.elem().prop("player", player);
-                $("#games").append(game.elem());
+                var engine = new GameEngine(player.name(), null, render);
+                var $game = engine.elem();
+
+                if (!$game)
+                {
+                    $game = $("<div/>").addClass("game");
+                }
+
+                $game.prop("engine", engine);
+                $game.prop("player", player);
+                $("#games").append($game);
     
-                game.oncompleted = function(engine) {
+                engine.oncompleted = function(engine) {
     
                     var name = player.name();
     
@@ -339,6 +348,10 @@
     </div>
     <div id="controls">
       <div id="controls-pane">
+        <div>
+          <input id="render-games" type="checkbox" checked>
+          render games
+        </div>
         <div id="leaderboard">
           <h3>Leaderboard (Top 25 of <span id="completed-count">0</span>)</h3>
           <table>
