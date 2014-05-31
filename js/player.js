@@ -340,7 +340,7 @@ function GeneticPlayer(genes)
 
     function randomWeight()
     {
-        return 100 * Math.random();
+        return 500 * Math.random();
     }
 
     function randomGenes()
@@ -412,12 +412,12 @@ function GeneticPlayer(genes)
         var validMoves = state.validMoves();
         var outcomes = [];
 
-        function score(state)
+        function score(state_)
         {
             var sum = 0;
 
-            state.each(function(i, j, value) {
-                sum += gridWeights[i][j] * value + distWeights[value] / state.nearestMatch(i, j).distance;
+            state_.each(function(i, j, value) {
+                sum += gridWeights[i][j] * value + distWeights[value] * value / state_.nearestMatch(i, j).distance;
             });
 
             return sum;
@@ -503,4 +503,23 @@ function GeneticPlayer(genes)
 
         return children;
     };
+
+    self.inspect = function() {
+        return {
+            "dirs": dirs,
+            "gridWeights": gridWeights,
+            "distWeights": distWeights,
+        };
+    };
 }
+
+var SNAKE_GENES = [
+    1, 2, 3, 0,   // directions
+    0, 0, 0, 0,   // grid weights
+    0, 0, 0, 0,   
+    40, 30, 20, 10,
+    100, 200, 300, 400,
+    100, 100, 100, 100, 100, 100,   // distance weights, 2-64
+    100, 100, 100, 100, 100, 100,   // 128 - 4096
+    100,                            // 8192
+];

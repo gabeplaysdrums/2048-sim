@@ -267,12 +267,34 @@
 
         var population = [];
 
-        for (var i=0; i < POPULATION_SIZE; i++)
+        // initial population
         {
+            var allfather = new GeneticPlayer(SNAKE_GENES);
+
             population.push({
-                "player": new GeneticPlayer(),
+                "player": allfather,
                 "fitness": 0,
             });
+
+            for (var i=0; i < POPULATION_SIZE; i++)
+            {
+                population.push({
+                    "player": allfather,
+                    "fitness": 0,
+                });
+
+                /*
+                var children = allfather.mate(allfather, 0, 0.1);
+
+                for (var j=0; j < children.length; j++)
+                {
+                    population.push({
+                        "player": children[j],
+                        "fitness": 0,
+                    });
+                }
+                */
+            }
         }
 
         function breed()
@@ -328,7 +350,7 @@
                     else
                     {
                         genIndex++;
-                        breed();
+                        //breed();
                         window.setTimeout(function() { nextGeneration(genIndex); }, 0);
                     }
                 });
