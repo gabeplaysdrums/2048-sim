@@ -166,7 +166,7 @@
 
         for (var i=0; i < 24; i++)
         {
-            var player = new SnakePlayer();
+            var player = new GeneticPlayer();
             var game = new GameEngine(player.name());
             game.elem().prop("player", player);
             $("#games").append(game.elem());

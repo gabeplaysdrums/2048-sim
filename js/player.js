@@ -290,8 +290,6 @@ function copyArray(x)
 
 function GeneticPlayer(genes)
 {
-    Player.call(this, "genetic");
-
     var self = this;
 
     var dirs = [];
@@ -303,12 +301,82 @@ function GeneticPlayer(genes)
         [0, 0, 0, 0],
     ];
 
-    var distWeights = [];
+    var distWeights = {};
 
-    var player = new RandomPlayer();
+    // ctor
+    {
+        if (genes === undefined)
+        {
+            genes = randomGenes();
+        }
+
+        loadGenes(genes);
+    }
+
+    function hashCode(str)
+    {
+        var hash = 0;
+
+        if (str.length == 0)
+        {
+            return hash;
+        }
+
+        for (var i = 0; i < str.length; i++)
+        {
+            char = str.charCodeAt(i);
+            hash = ((hash<<5)-hash)+char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+
+        if (hash < 0)
+        {
+    	    hash = 0xFFFFFFFF + hash + 1;
+        }
+
+        return hash;
+    }
+
+    Player.call(this, "genetic [" + hashCode(encodeGenome(genes)).toString(32) + "]");
 
     this.chooseMove = function(state) {
-        return player.chooseMove(state);
+
+        var validMoves = state.validMoves();
+        var outcomes = [];
+
+        function score(state)
+        {
+            var sum = 0;
+
+            state.each(function(i, j, value) {
+                sum += gridWeights[i][j] * value + distWeights[value] / state.nearestMatch(i, j).distance;
+            });
+
+            return sum;
+        }
+
+        for (var i=0; i < dirs.length; i++)
+        {
+            var dir = dirs[i];
+
+            if (validMoves[dir])
+            {
+                var engine = new GameEngine(null, state.grid(), false);
+                engine.applyMove(dir, false);
+                outcomes.push({
+                    "dir": dir,
+                    "score": score(engine.state()),
+                });
+            }
+        }
+
+        if (outcomes.length > 0)
+        {
+            outcomes.sort(function(a, b) { return b.score - a.score; });
+            return outcomes[0].dir;
+        }
+
+        return null;
     };
 
     this.genes = function() {
@@ -345,7 +413,8 @@ function GeneticPlayer(genes)
         for (var i=0; i < MAX_POW; i++)
         {
             var w = genes[g]; g++;
-            distWeights.push(w);
+            var value = Math.pow(2, i + 1);
+            distWeights[value] = w;
         }
     }
 
@@ -377,15 +446,5 @@ function GeneticPlayer(genes)
         }
 
         return genes;
-    }
-
-    // ctor
-    {
-        if (genes === undefined)
-        {
-            genes = randomGenes();
-        }
-
-        loadGenes(genes);
     }
 }
