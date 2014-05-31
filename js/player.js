@@ -269,3 +269,123 @@ function PrimaryDirectionPlayer()
         self.reset();
     }
 }
+
+function shuffle(o)
+{
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+}
+
+function copyArray(x)
+{
+    var temp = [];
+
+    for (var i=0; i < x.length; i++)
+    {
+        temp.push(x[i]);
+    }
+
+    return temp;
+}
+
+function GeneticPlayer(genes)
+{
+    Player.call(this, "genetic");
+
+    var self = this;
+
+    var dirs = [];
+
+    var gridWeights = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+    ];
+
+    var distWeights = [];
+
+    var player = new RandomPlayer();
+
+    this.chooseMove = function(state) {
+        return player.chooseMove(state);
+    };
+
+    this.genes = function() {
+        return genes;
+    };
+
+    function loadGenes(genes)
+    {
+        var g = 0;
+
+        for (var i=0; i < DIRECTIONS.length; i++)
+        {
+            var index = genes[g]; g++;
+
+            if (0 <= index && index < DIRECTIONS.length)
+            {
+                dirs.push(DIRECTIONS[index]);
+            }
+            else
+            {
+                throw "could not parse direction in genome";
+            }
+        }
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                var w = genes[g]; g++;
+                gridWeights[i][j] = w;
+            }
+        }
+
+        for (var i=0; i < MAX_POW; i++)
+        {
+            var w = genes[g]; g++;
+            distWeights.push(w);
+        }
+    }
+
+    function randomGenes()
+    {
+        var genes = [];
+
+        var dirIndexes = shuffle([ 0, 1, 2, 3 ]);
+
+        while (dirIndexes.length > 0)
+        {
+            genes.push(dirIndexes[0]);
+            dirIndexes.shift();
+        }
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                var w = 100 * Math.random();
+                genes.push(w);
+            }
+        }
+
+        for (var i=0; i < MAX_POW; i++)
+        {
+            var w = 100 * Math.random();
+            genes.push(w);
+        }
+
+        return genes;
+    }
+
+    // ctor
+    {
+        if (genes === undefined)
+        {
+            genes = randomGenes();
+        }
+
+        loadGenes(genes);
+    }
+}

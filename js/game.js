@@ -5,6 +5,13 @@ var Direction = {
   "Right": "right",
 };
 
+var DIRECTIONS = [
+    Direction.Up, 
+    Direction.Down, 
+    Direction.Left, 
+    Direction.Right,
+];
+
 var MIN_POW = 1;      // 2^1 = 2
 var MAX_POW = 13;     // 2^13 = 8192
 var GRID_SIZE = 4;
