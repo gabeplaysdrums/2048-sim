@@ -112,12 +112,12 @@
         $("#controls-toggle").click(toggleControls);
         toggleControls();
 
-        function PlayerStats()
+        function StatsCollection()
         {
             var self = this;
             var data = [];
 
-            this.report = function(score) {
+            this.addData = function(score) {
                 data.push(score);
                 data.sort(function(a, b) { return a - b; });
             }
@@ -164,49 +164,58 @@
             };
         }
 
-        for (var i=0; i < 24; i++)
+        function RunSimulation(player, callback)
         {
-            var player = new GeneticPlayer();
-            var game = new GameEngine(player.name());
-            game.elem().prop("player", player);
-            $("#games").append(game.elem());
+            var NUM_GAMES = 24;
+            var completedCount = 0;
+            var stats = new StatsCollection();
 
-            game.oncompleted = function(engine) {
+            $("#games").empty();
 
-                var player = engine.elem().prop("player")
-                var name = player.name();
-
-                if (!results[name])
-                {
-                    results[name] = new PlayerStats();
-                }
-
-                results[name].report(engine.score());
-
-                var h = engine.state().highest();
-
-                leaderboard.push({
-                    "name": name,
-                    "score": engine.score(),
-                    "moveCount": engine.moveCount(),
-                    "maxValue": engine.state().maxValue(),
-                    "highest": [ h[0], h[1], h[2] ].join(", "),
-                });
-                
-                leaderboard.sort(function(a, b) { return b["score"] - a["score"]; });
-                $("#leaderboard-entries").empty();
-
-                for (var i=0; i < leaderboard.length && i < 25; i++)
-                {
-                    var $container = $("<div />")
-                        .html($("#leaderboard-entry-template")
-                        .render(leaderboard[i]));
-                    var $entry = $container.children().first();
-                    $("#leaderboard-entries").append($entry);
-                }
-
-                $("#completed-count").text(leaderboard.length);
-            };
+            for (var i=0; i < NUM_GAMES; i++)
+            {
+                var game = new GameEngine(player.name());
+                game.elem().prop("player", player);
+                $("#games").append(game.elem());
+    
+                game.oncompleted = function(engine) {
+    
+                    var name = player.name();
+    
+                    stats.addData(engine.score());
+    
+                    var h = engine.state().highest();
+    
+                    leaderboard.push({
+                        "name": name,
+                        "score": engine.score(),
+                        "moveCount": engine.moveCount(),
+                        "maxValue": engine.state().maxValue(),
+                        "highest": [ h[0], h[1], h[2] ].join(", "),
+                    });
+                    
+                    leaderboard.sort(function(a, b) { return b["score"] - a["score"]; });
+                    $("#leaderboard-entries").empty();
+    
+                    for (var i=0; i < leaderboard.length && i < 25; i++)
+                    {
+                        var $container = $("<div />")
+                            .html($("#leaderboard-entry-template")
+                            .render(leaderboard[i]));
+                        var $entry = $container.children().first();
+                        $("#leaderboard-entries").append($entry);
+                    }
+    
+                    $("#completed-count").text(leaderboard.length);
+    
+                    completedCount++;
+    
+                    if (completedCount === NUM_GAMES)
+                    {
+                        callback(player, stats);
+                    }
+                };
+            }
         }
 
         $.views.tags("decimal3", function(value) {
@@ -218,15 +227,6 @@
             var best = null;
 
             $.each($(".game"), function(i, elem) {
-
-                /*
-                var stats = results[elem.player.name()];
-
-                if (stats && stats.count() >= 500)
-                {
-                    return true;
-                }
-                */
 
                 if (!elem.engine.state().completed())
                 {
@@ -251,6 +251,27 @@
 
         window.setInterval(tick, 0);
         //$(window).click(tick);
+
+        var player = null;
+
+        function nextSimulation()
+        {
+            player = new GeneticPlayer();
+
+            RunSimulation(player, function(player, stats) {
+                console.log(
+                    player.name() + 
+                    ": min= " + stats.min().toFixed(3) +
+                    ", mean= " + stats.mean().toFixed(3) + 
+                    ", max= " + stats.max().toFixed(3) +
+                    ", median= " + stats.median().toFixed(3)
+                );
+    
+                window.setTimeout(nextSimulation(), 0);
+            });
+        }
+
+        nextSimulation();
 
     });
 

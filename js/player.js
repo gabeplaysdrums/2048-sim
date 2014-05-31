@@ -303,6 +303,71 @@ function GeneticPlayer(genes)
 
     var distWeights = {};
 
+    function loadGenes(genes)
+    {
+        var g = 0;
+
+        for (var i=0; i < DIRECTIONS.length; i++)
+        {
+            var index = genes[g]; g++;
+
+            if (0 <= index && index < DIRECTIONS.length)
+            {
+                dirs.push(DIRECTIONS[index]);
+            }
+            else
+            {
+                throw "could not parse direction in genome";
+            }
+        }
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                var w = genes[g]; g++;
+                gridWeights[i][j] = w;
+            }
+        }
+
+        for (var i=0; i < MAX_POW; i++)
+        {
+            var w = genes[g]; g++;
+            var value = Math.pow(2, i + 1);
+            distWeights[value] = w;
+        }
+    }
+
+    function randomGenes()
+    {
+        var genes = [];
+
+        var dirIndexes = shuffle([ 0, 1, 2, 3 ]);
+
+        while (dirIndexes.length > 0)
+        {
+            genes.push(dirIndexes[0]);
+            dirIndexes.shift();
+        }
+
+        for (var i=0; i < GRID_SIZE; i++)
+        {
+            for (var j=0; j < GRID_SIZE; j++)
+            {
+                var w = 100 * Math.random();
+                genes.push(w);
+            }
+        }
+
+        for (var i=0; i < MAX_POW; i++)
+        {
+            var w = 100 * Math.random();
+            genes.push(w);
+        }
+
+        return genes;
+    }
+
     // ctor
     {
         if (genes === undefined)
@@ -383,68 +448,19 @@ function GeneticPlayer(genes)
         return genes;
     };
 
-    function loadGenes(genes)
-    {
-        var g = 0;
+    this.mate = function(player) {
 
-        for (var i=0; i < DIRECTIONS.length; i++)
+        var childGenes = copyArray(self.genes());
+        var playerGenes = player.genes();
+
+        var offset = DIRECTIONS.length;
+        var index = offset + Math.floor(Math.random() * (childGenes.length - offset));
+
+        for (var i=index; i < childGenes.length; i++)
         {
-            var index = genes[g]; g++;
-
-            if (0 <= index && index < DIRECTIONS.length)
-            {
-                dirs.push(DIRECTIONS[index]);
-            }
-            else
-            {
-                throw "could not parse direction in genome";
-            }
+            childGenes[i] = playerGenes[i];
         }
 
-        for (var i=0; i < GRID_SIZE; i++)
-        {
-            for (var j=0; j < GRID_SIZE; j++)
-            {
-                var w = genes[g]; g++;
-                gridWeights[i][j] = w;
-            }
-        }
-
-        for (var i=0; i < MAX_POW; i++)
-        {
-            var w = genes[g]; g++;
-            var value = Math.pow(2, i + 1);
-            distWeights[value] = w;
-        }
-    }
-
-    function randomGenes()
-    {
-        var genes = [];
-
-        var dirIndexes = shuffle([ 0, 1, 2, 3 ]);
-
-        while (dirIndexes.length > 0)
-        {
-            genes.push(dirIndexes[0]);
-            dirIndexes.shift();
-        }
-
-        for (var i=0; i < GRID_SIZE; i++)
-        {
-            for (var j=0; j < GRID_SIZE; j++)
-            {
-                var w = 100 * Math.random();
-                genes.push(w);
-            }
-        }
-
-        for (var i=0; i < MAX_POW; i++)
-        {
-            var w = 100 * Math.random();
-            genes.push(w);
-        }
-
-        return genes;
-    }
+        return new GeneticPlayer(childGenes);
+    };
 }
