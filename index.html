@@ -104,8 +104,15 @@
     </style>
     <script type="text/javascript">
 
-    var results = {};
     var leaderboard = [];
+
+    var POPULATION_SIZE = 10;
+    var NUM_GAMES = 24;
+    var CROSSOVER_RATE = 0.8;
+    var MUTATION_RATE = 0.05;
+    var TOP_N = 3;
+
+    var population = [];
 
     $(function() {
 
@@ -266,13 +273,6 @@
         window.setInterval(tick, 0);
         //$(window).click(tick);
 
-        var POPULATION_SIZE = 10;
-        var NUM_GAMES = 24;
-        var CROSSOVER_RATE = 0.7;
-        var MUTATION_RATE = 0.01;
-
-        var population = [];
-
         // initial population
         {
             var allfather = new GeneticPlayer(SNAKE_GENES);
@@ -282,9 +282,9 @@
                 "fitness": 0,
             });
 
-            while (population.length < POPULATION_SIZE)
+            while (population.length < 2 * POPULATION_SIZE)
             {
-                var children = allfather.mate(allfather, 0, 0.1);
+                var children = allfather.mate(allfather, 0, 0.2);
 
                 for (var j=0; j < children.length; j++)
                 {
@@ -301,12 +301,16 @@
             var newPopulation = [];
 
             population.sort(function(a, b) { return b.fitness - a.fitness; });
-            newPopulation.push(population[0]);
+
+            for (var i=0; i < TOP_N; i++)
+            {
+                newPopulation.push(population[i]);
+            }
 
             while (newPopulation.length < POPULATION_SIZE)
             {
-                var male = chooseFittest(population).player;
-                var female = chooseFittest(population).player;
+                var male = chooseFittest(population, TOP_N).player;
+                var female = chooseFittest(population, TOP_N).player;
                 var children = male.mate(female, CROSSOVER_RATE, MUTATION_RATE);
 
                 while (children.length > 0)
@@ -335,7 +339,7 @@
                 var player = population[popIndex].player;
     
                 runSimulation(player, function(player, stats) {
-                    population[popIndex].fitness = stats.mean() + stats.max();
+                    population[popIndex].fitness = stats.min() + 2 * stats.mean() + stats.max();
                     genStats.addData(population[popIndex].fitness);
 
                     console.log(
@@ -395,7 +399,7 @@
     <div id="controls">
       <div id="controls-pane">
         <div>
-          <input id="render-games" type="checkbox" checked>
+          <input id="render-games" type="checkbox">
           render games
         </div>
         <div id="chart"></div>

@@ -8,11 +8,18 @@ function decodeGenome(genomeString)
     return JSON.parse(atob(atob(genomeString)));
 }
 
-function chooseFittest(population)
+function chooseFittest(population, n)
 {
+    if (n === undefined)
+    {
+        n = population.length;
+    }
+
+    population.sort(function(a, b) { return b.fitness - a.fitness; });
+
     var sum = 0;
 
-    for (var i=0; i < population.length; i++)
+    for (var i=0; i < n; i++)
     {
         sum += population[i].fitness;
     }
@@ -20,7 +27,7 @@ function chooseFittest(population)
     var roulette = Math.random() * sum;
     sum = 0;
 
-    for (var i=0; i < population.length; i++)
+    for (var i=0; i < n; i++)
     {
         sum += population[i].fitness;
 

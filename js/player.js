@@ -493,7 +493,7 @@ function GeneticPlayer(genes)
             {
                 if (Math.random() < mutationRate)
                 {
-                    childGenes[k][i] = randomWeight();
+                    childGenes[k][i] = Math.max(0, childGenes[k][i] + Math.random() * 100 - 50);
                 }
             }
         }
