@@ -285,6 +285,7 @@ function GameEngine(label, initialGrid, render)
         [0, 0, 0, 0],
         [0, 0, 0, 0],
     ];
+
     var state = new GameState(grid);
     var moveCount;
     var $game;
@@ -502,6 +503,11 @@ function GameEngine(label, initialGrid, render)
         moveCount++;
         updateStats();
 
+        if (state.completed() && self.oncompleted)
+        {
+            self.oncompleted(self);
+        }
+
         return true;
     };
 
@@ -530,6 +536,8 @@ function GameEngine(label, initialGrid, render)
 
         updateStats();
     };
+
+    this.oncompleted = function() {};
 
     // ctor
     {

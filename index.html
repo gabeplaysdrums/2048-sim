@@ -170,6 +170,43 @@
             var game = new GameEngine(player.name());
             game.elem().prop("player", player);
             $("#games").append(game.elem());
+
+            game.oncompleted = function(engine) {
+
+                var player = engine.elem().prop("player")
+                var name = player.name();
+
+                if (!results[name])
+                {
+                    results[name] = new PlayerStats();
+                }
+
+                results[name].report(engine.score());
+
+                var h = engine.state().highest();
+
+                leaderboard.push({
+                    "name": name,
+                    "score": engine.score(),
+                    "moveCount": engine.moveCount(),
+                    "maxValue": engine.state().maxValue(),
+                    "highest": [ h[0], h[1], h[2] ].join(", "),
+                });
+                
+                leaderboard.sort(function(a, b) { return b["score"] - a["score"]; });
+                $("#leaderboard-entries").empty();
+
+                for (var i=0; i < leaderboard.length && i < 25; i++)
+                {
+                    var $container = $("<div />")
+                        .html($("#leaderboard-entry-template")
+                        .render(leaderboard[i]));
+                    var $entry = $container.children().first();
+                    $("#leaderboard-entries").append($entry);
+                }
+
+                $("#completed-count").text(leaderboard.length);
+            };
         }
 
         $.views.tags("decimal3", function(value) {
@@ -191,45 +228,7 @@
                 }
                 */
 
-                if (elem.engine.state().completed())
-                {
-                    var name = elem.player.name();
-
-                    if (!results[name])
-                    {
-                        results[name] = new PlayerStats();
-                    }
-
-                    results[name].report(elem.engine.score());
-
-                    var h = elem.engine.state().highest();
-
-                    leaderboard.push({
-                        "name": name,
-                        "score": elem.engine.score(),
-                        "moveCount": elem.engine.moveCount(),
-                        "maxValue": elem.engine.state().maxValue(),
-                        "highest": [ h[0], h[1], h[2] ].join(", "),
-                    });
-                    
-                    leaderboard.sort(function(a, b) { return b["score"] - a["score"]; });
-                    $("#leaderboard-entries").empty();
-
-                    for (var i=0; i < leaderboard.length && i < 25; i++)
-                    {
-                        var $container = $("<div />")
-                            .html($("#leaderboard-entry-template")
-                            .render(leaderboard[i]));
-                        var $entry = $container.children().first();
-                        $("#leaderboard-entries").append($entry);
-                    }
-
-                    $("#completed-count").text(leaderboard.length);
-
-                    elem.engine.reset();
-                    elem.player.reset();
-                }
-                else
+                if (!elem.engine.state().completed())
                 {
                     var dir = elem.player.chooseMove(elem.engine.state());
     
