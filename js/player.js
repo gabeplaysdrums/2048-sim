@@ -417,7 +417,11 @@ function GeneticPlayer(genes)
             var sum = 0;
 
             state_.each(function(i, j, value) {
-                sum += gridWeights[i][j] * value + distWeights[value] * value / state_.nearestMatch(i, j).distance;
+                if (value !== 0)
+                {
+                    sum += gridWeights[i][j] * value + 
+                        distWeights[value] * value / state_.nearestMatch(i, j).distance;
+                }
             });
 
             return sum;

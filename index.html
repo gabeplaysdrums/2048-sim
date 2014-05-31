@@ -263,7 +263,7 @@
 
         var POPULATION_SIZE = 10;
         var CROSSOVER_RATE = 0.7;
-        var MUTATION_RATE = 0.002;
+        var MUTATION_RATE = 0.01;
 
         var population = [];
 
@@ -276,14 +276,8 @@
                 "fitness": 0,
             });
 
-            for (var i=0; i < POPULATION_SIZE; i++)
+            while (population.length < POPULATION_SIZE)
             {
-                population.push({
-                    "player": allfather,
-                    "fitness": 0,
-                });
-
-                /*
                 var children = allfather.mate(allfather, 0, 0.1);
 
                 for (var j=0; j < children.length; j++)
@@ -293,7 +287,6 @@
                         "fitness": 0,
                     });
                 }
-                */
             }
         }
 
@@ -332,15 +325,17 @@
                 var player = population[popIndex].player;
     
                 runSimulation(player, function(player, stats) {
+                    population[popIndex].fitness = stats.mean() + stats.max();
+
                     console.log(
                         player.name() + 
                         ": min= " + stats.min().toFixed(3) +
                         ", mean= " + stats.mean().toFixed(3) + 
                         ", max= " + stats.max().toFixed(3) +
-                        ", median= " + stats.median().toFixed(3)
+                        ", median= " + stats.median().toFixed(3) + 
+                        ", fitness= " + population[popIndex].fitness.toFixed(3)
                     );
     
-                    population[popIndex].fitness = stats.mean();
                     popIndex++;
     
                     if (popIndex < population.length)
@@ -350,7 +345,7 @@
                     else
                     {
                         genIndex++;
-                        //breed();
+                        breed();
                         window.setTimeout(function() { nextGeneration(genIndex); }, 0);
                     }
                 });
