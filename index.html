@@ -3,11 +3,13 @@
   <head>
     <title>2048 simulator</title>
     <link rel="stylesheet" href="css/game.css" />
+    <link rel="stylesheet" href="css/jqplot/jquery.jqplot.min.css" />
     <script src="js/jquery-1.11.1.min.js"></script>
     <script src="js/jsrender.min.js"></script>
     <script src="js/game.js"></script>
     <script src="js/player.js"></script>
     <script src="js/genetics.js"></script>
+    <script src="js/jqplot/jquery.jqplot.min.js"></script>
     <style type="text/css">
 
     html, body {
@@ -95,6 +97,10 @@
       text-align: right;
     }
 
+    #chart {
+      height: 300px;
+    }
+
     </style>
     <script type="text/javascript">
 
@@ -166,7 +172,6 @@
 
         function runSimulation(player, callback)
         {
-            var NUM_GAMES = 24;
             var completedCount = 0;
             var stats = new StatsCollection();
 
@@ -261,7 +266,10 @@
         window.setInterval(tick, 0);
         //$(window).click(tick);
 
-        var POPULATION_SIZE = 10;
+        //var POPULATION_SIZE = 10;
+        var POPULATION_SIZE = 1;
+        //var NUM_GAMES = 24;
+        var NUM_GAMES = 1;
         var CROSSOVER_RATE = 0.7;
         var MUTATION_RATE = 0.01;
 
@@ -316,9 +324,13 @@
             population = newPopulation;
         }
 
+        var chartData = [ [], [], [] ];
+
         function nextGeneration(genIndex)
         {
             console.log("----- Generation " + genIndex + " -----");
+
+            var genStats = new StatsCollection();
     
             function nextSimulation(popIndex)
             {
@@ -326,6 +338,7 @@
     
                 runSimulation(player, function(player, stats) {
                     population[popIndex].fitness = stats.mean() + stats.max();
+                    genStats.addData(population[popIndex].fitness);
 
                     console.log(
                         player.name() + 
@@ -344,6 +357,24 @@
                     }
                     else
                     {
+                        chartData[0].push(genStats.max());
+                        chartData[1].push(genStats.min());
+                        chartData[2].push(genStats.mean());
+
+                        $("#chart").empty();
+                        $.jqplot("chart", chartData, {
+                            axes: {
+                                xaxis: {
+                                    pad: 0,
+                                },
+                            },
+                            seriesDefaults: {
+                                markerOptions: {
+                                    show: false,
+                                },
+                            },
+                        });
+
                         genIndex++;
                         breed();
                         window.setTimeout(function() { nextGeneration(genIndex); }, 0);
@@ -369,6 +400,7 @@
           <input id="render-games" type="checkbox" checked>
           render games
         </div>
+        <div id="chart"></div>
         <div id="leaderboard">
           <h3>Leaderboard (Top 25 of <span id="completed-count">0</span>)</h3>
           <table>
