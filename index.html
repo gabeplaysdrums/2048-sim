@@ -34,7 +34,7 @@
     #controls-pane {
       padding: 10px;
       background-color: rgba(255, 255, 255, 0.95);
-      width: 400px;
+      width: 500px;
       height: 100%;
       overflow: auto;
       border-right: 5px solid lightgray;
@@ -97,6 +97,46 @@
       text-align: right;
     }
 
+
+    #player-leaderboard th {
+      text-align: left;
+      text-decoration: underline;
+      padding-right: 10px;
+    }
+
+    #player-leaderboard-entries .entry .name a {
+      color: inherit;
+      text-decoration: inherit;
+    }
+
+    #player-leaderboard-entries .entry .name {
+      font-weight: bold;
+    }
+
+    #player-leaderboard-entries .entry td {
+      padding-right: 10px;
+    }
+
+    #player-leaderboard-entries .entry .move-count {
+      text-align: right;
+    }
+
+    #player-leaderboard-entries .entry .min {
+      text-align: right;
+    }
+
+    #player-leaderboard-entries .entry .mean {
+      text-align: right;
+    }
+
+    #player-leaderboard-entries .entry .max {
+      text-align: right;
+    }
+
+    #player-leaderboard-entries .entry .fitness {
+      text-align: right;
+    }
+
     #chart {
       height: 300px;
     }
@@ -105,16 +145,23 @@
     <script type="text/javascript">
 
     var leaderboard = [];
+    var bestPlayers = [];
 
-    var POPULATION_SIZE = 10;
-    var NUM_GAMES = 24;
+    var POPULATION_SIZE = 2;
+    var NUM_GAMES = 1;
     var CROSSOVER_RATE = 0.8;
     var MUTATION_RATE = 0.05;
-    var TOP_N = 3;
+    var TOP_N = 1;
 
     var population = [];
     var playerStats = {};
     var tickTimer = null;
+
+    function copyGenome(name)
+    {
+        var genomeString = encodeGenome(playerStats[name].player.genes());
+        window.prompt("Copy to clipboard: Ctrl+C, Enter", genomeString);
+    }
 
     $(function() {
 
@@ -185,10 +232,14 @@
 
             if (!playerStats[player.name()])
             {
-                playerStats[player.name()] = new StatsCollection();
+                playerStats[player.name()] = {
+                    "player": player,
+                    "stats": new StatsCollection(),
+                    "fitness": 0,
+                };
             }
 
-            var stats = playerStats[player.name()];
+            var stats = playerStats[player.name()].stats;
 
             var render = $("#render-games").is(":checked");
             $("#games").empty();
@@ -347,8 +398,11 @@
                 var player = population[popIndex].player;
     
                 runSimulation(player, function(player, stats) {
-                    population[popIndex].fitness = stats.min() + 2 * stats.mean() + stats.max();
-                    genStats.addData(population[popIndex].fitness);
+                    var fitness = stats.min() + 2 * stats.mean() + stats.max();
+
+                    population[popIndex].fitness = fitness;
+                    genStats.addData(fitness);
+                    playerStats[player.name()].fitness = fitness;
 
                     console.log(
                         player.name() + 
@@ -385,6 +439,39 @@
                             },
                         });
 
+                        while (bestPlayers.length > 0)
+                        {
+                            bestPlayers.pop();
+                        }
+
+                        for (var name in playerStats)
+                        {
+                            var stats = playerStats[name].stats;
+
+                            bestPlayers.push({
+                                "name": name,
+                                "count": stats.count(),
+                                "min": stats.min(),
+                                "mean": stats.mean(),
+                                "max": stats.max(),
+                                "fitness": playerStats[name].fitness,
+                            });
+                        }
+
+                        bestPlayers.sort(function(a, b) { return b.fitness - a.fitness; });
+                        $("#player-leaderboard-entries").empty();
+        
+                        for (var i=0; i < bestPlayers.length && i < 25; i++)
+                        {
+                            var $container = $("<div />")
+                                .html($("#player-leaderboard-entry-template")
+                                .render(bestPlayers[i]));
+                            var $entry = $container.children().first();
+                            $("#player-leaderboard-entries").append($entry);
+                        }
+        
+                        $("#player-count").text(bestPlayers.length);
+
                         genIndex++;
                         breed();
                         window.setTimeout(function() { nextGeneration(genIndex); }, 0);
@@ -411,6 +498,21 @@
           render games
         </div>
         <div id="chart"></div>
+        <div id="player-leaderboard">
+          <h3>Best Players (Top 25 of <span id="player-count">0</span>)</h3>
+          <table>
+            <tr>
+              <th>name</th>
+              <th>games</th>
+              <th>min</th>
+              <th>mean</th>
+              <th>max</th>
+              <th>fitness</th>
+            </tr>
+            <tbody id="player-leaderboard-entries">
+            </tbody>
+          </table>
+        </div>
         <div id="leaderboard">
           <h3>Best Games (Top 25 of <span id="completed-count">0</span>)</h3>
           <table>
@@ -432,6 +534,18 @@
         <td class="score">{{decimal3 score /}}</td>
         <td class="move-count">{{:moveCount}}</td>
         <td class="highest-tiles">{{:highest}}</td>
+      </tr>
+    </script>
+    <script id="player-leaderboard-entry-template" type="text/x-jsrender">
+      <tr class="entry">
+        <td class="name">
+          <a href="javascript:copyGenome('{{:name}}');">{{:name}}</a>
+        </td>
+        <td class="game-count">{{:count}}</td>
+        <td class="min">{{decimal3 min /}}</td>
+        <td class="mean">{{decimal3 mean /}}</td>
+        <td class="max">{{decimal3 max /}}</td>
+        <td class="fitness">{{decimal3 fitness /}}</td>
       </tr>
     </script>
     <script id="game-template" type="text/x-jsrender">
