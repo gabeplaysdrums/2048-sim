@@ -150,6 +150,7 @@
 
     var POPULATION_SIZE = 10;
     var NUM_GAMES = 24;
+    var RENDER_GAMES = 3;
     var CROSSOVER_RATE = 0.8;
     var MUTATION_RATE = 0.05;
     var TOP_N = 3;
@@ -264,17 +265,21 @@
 
             var stats = playerStats[player.name()].stats;
 
-            var render = $("#render-games").is(":checked");
             $("#games").empty();
 
             for (var i=0; i < NUM_GAMES; i++)
             {
+                var render = (
+                    $("#render-games").is(":checked") && 
+                    i < RENDER_GAMES
+                );
+
                 var engine = new GameEngine(player.name(), null, render);
                 var $game = engine.elem();
 
                 if (!$game)
                 {
-                    $game = $("<div/>").addClass("game");
+                    $game = $("<div/>").addClass("game").hide();
                 }
 
                 $game.prop("engine", engine);
@@ -504,7 +509,7 @@
     <div id="controls">
       <div id="controls-pane">
         <div>
-          <input id="render-games" type="checkbox">
+          <input id="render-games" type="checkbox" checked>
           render games
         </div>
         <div id="player-leaderboard">
