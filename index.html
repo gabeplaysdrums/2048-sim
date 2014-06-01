@@ -57,6 +57,7 @@
       font-family: monospace;
       color: rgb(100, 100, 100);
       font-weight: bold;
+      margin-top: 30px;
     }
 
     #controls-toggle:before {
@@ -140,6 +141,19 @@
     #chart {
       margin-left: 40px;
       height: 300px;
+    }
+
+    #progress {
+      padding: 0;
+    }
+
+    #progress .bar {
+      display: inline-block;
+      padding: 0;
+      margin: 0;
+      width: 0;
+      height: 10px;
+      background-color: darkorange;
     }
 
     </style>
@@ -250,8 +264,13 @@
             };
         }
 
-        function runSimulation(player, callback)
+        function runSimulation(player, allCompletedCallback, gameCompletedCallback)
         {
+            if (!gameCompletedCallback)
+            {
+                gameCompletedCallback = function() {};
+            }
+
             var completedCount = 0;
 
             if (!playerStats[player.name()])
@@ -315,12 +334,12 @@
                     }
     
                     $("#completed-count").text(leaderboard.length);
-    
                     completedCount++;
+                    gameCompletedCallback(completedCount);
     
                     if (completedCount === NUM_GAMES)
                     {
-                        callback(player, stats);
+                        allCompletedCallback(player, stats);
                     }
                 };
             }
@@ -490,6 +509,13 @@
                         breed();
                         window.setTimeout(function() { nextGeneration(genIndex); }, 0);
                     }
+                },
+                function(completedCount) {
+                    var pct = Math.floor(
+                        100 * (popIndex * NUM_GAMES + completedCount) / (population.length * NUM_GAMES)
+                    );
+
+                    $("#progress .bar").css("width", pct + "%");
                 });
             }
     
@@ -503,6 +529,9 @@
     </script>
   </head>
   <body>
+    <div id="progress">
+      <span class="bar"></span>
+    </div>
     <div id="chart"></div>
     <div id="games">
     </div>
