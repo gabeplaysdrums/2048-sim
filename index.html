@@ -138,6 +138,7 @@
     }
 
     #chart {
+      margin-left: 40px;
       height: 300px;
     }
 
@@ -147,11 +148,11 @@
     var leaderboard = [];
     var bestPlayers = [];
 
-    var POPULATION_SIZE = 2;
-    var NUM_GAMES = 1;
+    var POPULATION_SIZE = 10;
+    var NUM_GAMES = 24;
     var CROSSOVER_RATE = 0.8;
     var MUTATION_RATE = 0.05;
-    var TOP_N = 1;
+    var TOP_N = 3;
 
     var population = [];
     var playerStats = {};
@@ -164,6 +165,28 @@
     }
 
     $(function() {
+
+        var chartData = [ [], [], [] ];
+
+        function renderChart(data)
+        {
+            $("#chart").empty();
+            $.jqplot("chart", data, {
+                axes: {
+                    xaxis: {
+                        pad: 0,
+                    },
+                },
+                seriesDefaults: {
+                    markerOptions: {
+                        show: false,
+                    },
+                },
+            });
+
+        }
+
+        renderChart([ [0], [0], [0] ]);
 
         function toggleControls()
         {
@@ -385,8 +408,6 @@
             population = newPopulation;
         }
 
-        var chartData = [ [], [], [] ];
-
         function nextGeneration(genIndex)
         {
             console.log("----- Generation " + genIndex + " -----");
@@ -425,19 +446,7 @@
                         chartData[1].push(genStats.min());
                         chartData[2].push(genStats.mean());
 
-                        $("#chart").empty();
-                        $.jqplot("chart", chartData, {
-                            axes: {
-                                xaxis: {
-                                    pad: 0,
-                                },
-                            },
-                            seriesDefaults: {
-                                markerOptions: {
-                                    show: false,
-                                },
-                            },
-                        });
+                        renderChart(chartData);
 
                         while (bestPlayers.length > 0)
                         {
@@ -489,6 +498,7 @@
     </script>
   </head>
   <body>
+    <div id="chart"></div>
     <div id="games">
     </div>
     <div id="controls">
@@ -497,7 +507,6 @@
           <input id="render-games" type="checkbox">
           render games
         </div>
-        <div id="chart"></div>
         <div id="player-leaderboard">
           <h3>Best Players (Top 25 of <span id="player-count">0</span>)</h3>
           <table>
