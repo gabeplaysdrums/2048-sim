@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>2048 simulation: view player</title>
+    <link rel="stylesheet" href="css/base.css" />    
+    <script src="js/jquery-1.11.1.min.js"></script>
+    <script src="js/jsrender.min.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/genetics.js"></script>
+    <style type="text/css">
+
+      body {
+        padding: 20px;
+        padding-top: 0;
+      }
+
+      #genome {
+        font-family: monospace;
+      }
+
+    </style>
+    <script type="text/javascript">
+
+      $(function() {
+
+          var $genome = $("#genome");
+
+          $genome.val("--- Paste genome here ---");
+
+          $genome
+              .focus(function() {
+    
+                  this.prevText = $(this).val();
+                  $(this).val("");
+    
+              })
+              .blur(function() {
+
+                  if ($(this).val() === "")
+                  {
+                      $(this).val(this.prevText);
+                  }
+    
+              });
+
+          $("#form").submit(function() {
+
+              var genes = decodeGenome($genome.val());
+              var $player = $("<div/>").text(JSON.stringify(genes));
+              $("#players").append($player);
+              return false;
+
+          });
+
+      });
+
+    </script>
+  </head>
+  <body>
+    <h1>View a Player</h1>
+    <form id="form" action="javascript:void(0);">
+      <input id="genome" size="128" />
+    </form>
+    <div id="players"></div>
+  </body>
+</html>
