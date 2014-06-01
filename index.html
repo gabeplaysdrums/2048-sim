@@ -8,6 +8,7 @@
     <script src="js/jsrender.min.js"></script>
     <script src="js/game.js"></script>
     <script src="js/player.js"></script>
+    <script src="js/stats.js"></script>
     <script src="js/genetics.js"></script>
     <script src="js/jqplot/jquery.jqplot.min.js"></script>
     <style type="text/css">
@@ -126,7 +127,7 @@
       text-align: right;
     }
 
-    #player-leaderboard-entries .entry .mean {
+    #player-leaderboard-entries .entry .median {
       text-align: right;
     }
 
@@ -140,7 +141,7 @@
 
     #chart {
       margin-left: 40px;
-      height: 300px;
+      height: 500px;
     }
 
     #progress {
@@ -163,11 +164,11 @@
     var bestPlayers = [];
 
     var POPULATION_SIZE = 10;
-    var NUM_GAMES = 24;
-    var RENDER_GAMES = 3;
-    var CROSSOVER_RATE = 0.8;
-    var MUTATION_RATE = 0.05;
-    var TOP_N = 3;
+    var NUM_GAMES = 24;;
+    var RENDER_GAMES = 6;
+    var CROSSOVER_RATE = 0.7;
+    var MUTATION_RATE = 0.01;
+    var TOP_N = 5;
 
     var population = [];
     var playerStats = {};
@@ -212,58 +213,6 @@
         $("#controls-toggle").click(toggleControls);
         toggleControls();
 
-        function StatsCollection()
-        {
-            var self = this;
-            var data = [];
-
-            this.addData = function(score) {
-                data.push(score);
-                data.sort(function(a, b) { return a - b; });
-            }
-
-            this.min = function() {
-                return (data.length > 0) ? data[0] : null;
-            };
-
-            this.max = function() {
-                return (data.length > 0) ? data[data.length - 1] : null;
-            };
-
-            this.median = function() {
-
-                if (data.length === 0)
-                {
-                    return null;
-                }
-
-                var i = Math.floor(data.length / 2);
-
-                if (data.length % 2 === 0)
-                {
-                    return (data[i] + data[i + 1]) / 2;
-                }
-
-                return data[i];
-            };
-
-            this.mean = function() {
-
-                var sum = 0;
-
-                for (var i=0; i < data.length; i++)
-                {
-                    sum += data[i];
-                }
-
-                return sum / data.length;
-            };
-
-            this.count = function() {
-                return data.length;
-            };
-        }
-
         function runSimulation(player, allCompletedCallback, gameCompletedCallback)
         {
             if (!gameCompletedCallback)
@@ -283,6 +232,14 @@
             }
 
             var stats = playerStats[player.name()].stats;
+
+            // after we've simulated 250 games, the fitness won't change
+            if (stats.count() > 250)
+            {
+                gameCompletedCallback(NUM_GAMES);
+                allCompletedCallback(player, stats);
+                return;
+            }
 
             $("#games").empty();
 
@@ -388,7 +345,7 @@
                 "fitness": 0,
             });
 
-            while (population.length < 2 * POPULATION_SIZE)
+            while (population.length < POPULATION_SIZE)
             {
                 var children = allfather.mate(allfather, 0, 0.2);
 
@@ -406,17 +363,29 @@
         {
             var newPopulation = [];
 
+            /*
             population.sort(function(a, b) { return b.fitness - a.fitness; });
 
             for (var i=0; i < TOP_N; i++)
             {
                 newPopulation.push(population[i]);
             }
+            */
+
+            /*
+            for (var i=0; i < TOP_N && i < bestPlayers.length; i++)
+            {
+                newPopulation.push({
+                    "player": bestPlayers[i].player,
+                    "fitness": 0,
+                });
+            }
+            */
 
             while (newPopulation.length < POPULATION_SIZE)
             {
-                var male = chooseFittest(population, TOP_N).player;
-                var female = chooseFittest(population, TOP_N).player;
+                var male = chooseFittest(bestPlayers, TOP_N).player;
+                var female = chooseFittest(bestPlayers, TOP_N).player;
                 var children = male.mate(female, CROSSOVER_RATE, MUTATION_RATE);
 
                 while (children.length > 0)
@@ -443,7 +412,13 @@
                 var player = population[popIndex].player;
     
                 runSimulation(player, function(player, stats) {
-                    var fitness = stats.min() + 2 * stats.mean() + stats.max();
+                    var n = Math.floor(stats.count() * 0.9);
+                    var fitness = 0;
+                    
+                    if (n > 0)
+                    {
+                        fitness = stats.max(n) + 3 * stats.mean(n);
+                    }
 
                     population[popIndex].fitness = fitness;
                     genStats.addData(fitness);
@@ -485,9 +460,10 @@
                                 "name": name,
                                 "count": stats.count(),
                                 "min": stats.min(),
-                                "mean": stats.mean(),
+                                "median": stats.median(),
                                 "max": stats.max(),
                                 "fitness": playerStats[name].fitness,
+                                "player": playerStats[name].player,
                             });
                         }
 
@@ -539,7 +515,7 @@
     <div id="controls">
       <div id="controls-pane">
         <div>
-          <input id="render-games" type="checkbox" checked>
+          <input id="render-games" type="checkbox">
           render games
         </div>
         <div id="player-leaderboard">
@@ -549,7 +525,7 @@
               <th>name</th>
               <th>games</th>
               <th>min</th>
-              <th>mean</th>
+              <th>median</th>
               <th>max</th>
               <th>fitness</th>
             </tr>
@@ -587,7 +563,7 @@
         </td>
         <td class="game-count">{{:count}}</td>
         <td class="min">{{decimal3 min /}}</td>
-        <td class="mean">{{decimal3 mean /}}</td>
+        <td class="median">{{decimal3 median /}}</td>
         <td class="max">{{decimal3 max /}}</td>
         <td class="fitness">{{decimal3 fitness /}}</td>
       </tr>

@@ -481,14 +481,15 @@ function GeneticPlayer(genes)
             copyArray(playerGenes),
             copyArray(self.genes()),
         ];
+
+        for (var i=index; i < childGenes[0].length; i++)
+        {
+            childGenes[0][i] = genes[i];
+            childGenes[1][i] = playerGenes[i];
+        }
         
         for (var k=0; k < childGenes.length; k++)
         {
-            for (var i=index; i < childGenes[k].length; i++)
-            {
-                childGenes[k][i] = playerGenes[i];
-            }
-    
             for (var i=offset; i < childGenes[k].length; i++)
             {
                 if (Math.random() < mutationRate)
