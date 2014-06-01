@@ -113,6 +113,8 @@
     var TOP_N = 3;
 
     var population = [];
+    var playerStats = {};
+    var tickTimer = null;
 
     $(function() {
 
@@ -180,7 +182,13 @@
         function runSimulation(player, callback)
         {
             var completedCount = 0;
-            var stats = new StatsCollection();
+
+            if (!playerStats[player.name()])
+            {
+                playerStats[player.name()] = new StatsCollection();
+            }
+
+            var stats = playerStats[player.name()];
 
             var render = $("#render-games").is(":checked");
             $("#games").empty();
@@ -270,7 +278,7 @@
             $(best).addClass("best");
         }
 
-        window.setInterval(tick, 0);
+        tickTimer = window.setInterval(tick, 0);
         //$(window).click(tick);
 
         // initial population
@@ -404,7 +412,7 @@
         </div>
         <div id="chart"></div>
         <div id="leaderboard">
-          <h3>Leaderboard (Top 25 of <span id="completed-count">0</span>)</h3>
+          <h3>Best Games (Top 25 of <span id="completed-count">0</span>)</h3>
           <table>
             <tr>
               <th>player</th>
