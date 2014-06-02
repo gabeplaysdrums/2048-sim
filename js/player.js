@@ -509,7 +509,7 @@ function GeneticPlayer(genes)
         return children;
     };
 
-    self.inspect = function() {
+    self.weights = function() {
         return {
             "dirs": dirs,
             "gridWeights": gridWeights,

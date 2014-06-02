@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="css/base.css" />    
     <script src="js/jquery-1.11.1.min.js"></script>
     <script src="js/jsrender.min.js"></script>
+    <script src="js/game.js"></script>
     <script src="js/player.js"></script>
     <script src="js/genetics.js"></script>
     <style type="text/css">
@@ -17,6 +18,51 @@
       #genome {
         font-family: monospace;
       }
+
+      #players {
+          padding: 10px;
+      }
+
+      .player {
+          display: inline-block;
+          margin: 10px;
+      }
+
+      .player table.grid-weights {
+          width: 315px;
+          border: 1px solid lightgray;
+      }
+
+      .player table.grid-weights td {
+          padding: 5px;
+          text-align: right;
+          font-family: monospace;
+      }
+
+      .player table.grid-weights td.zero {
+          color: lightgray;
+      }
+
+      .player .name {
+          font-weight: bold;
+          padding: 5px;
+          font-size: larger;
+      }
+
+      .player table.dist-weights td {
+          font-size: 10pt;
+          padding: 5px;
+          text-align: right;
+          font-family: monospace;
+      }
+
+      .player table.dist-weights th {
+          font-size: 10pt;
+          padding: 5px;
+          text-align: right;
+          font-family: monospace;
+      }
+
 
     </style>
     <script type="text/javascript">
@@ -46,7 +92,39 @@
           $("#form").submit(function() {
 
               var genes = decodeGenome($genome.val());
-              var $player = $("<div/>").text(JSON.stringify(genes));
+              var player = new GeneticPlayer(genes);
+              var weights = player.weights();
+
+              var $container = $("<div />").html($("#player-template").render({
+                  "name": player.name(),
+              }));
+
+              $player = $container.children().first();
+
+              for (var i=0; i < GRID_SIZE; i++)
+              {
+                  for (var j=0; j < GRID_SIZE; j++)
+                  {
+                      var w = weights.gridWeights[i][j];
+
+                      var $cell = $player.find("table.grid-weights tr:eq(" + i + ") td:eq(" + j + ")");
+                      $cell.text(w.toFixed(3));
+
+                      if (w === 0)
+                      {
+                          $cell.addClass("zero");
+                      }
+
+                  }
+              }
+
+              for (var value in weights.distWeights)
+              {
+                  var w = weights.distWeights[value];
+                  var $cell = $player.find("table.dist-weights .w-" + value);
+                  $cell.text(w.toFixed(2));
+              }
+
               $("#players").append($player);
               return false;
 
@@ -62,5 +140,50 @@
       <input id="genome" size="128" />
     </form>
     <div id="players"></div>
+    <script id="player-template" type="text/x-jsrender">
+      <div class="player">
+        <div class="name">{{:name}}</div>
+        <table class="grid-weights">
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+        </table>
+        <table class="dist-weights">
+          <tr>
+            <th>2</th><td class="w-2">000.000</td>
+            <th>4</th><td class="w-4">000.000</td>
+            <th>8</th><td class="w-8">000.000</td>
+          </tr>
+          <tr>
+            <th>16</th><td class="w-16">000.000</td>
+            <th>32</th><td class="w-32">000.000</td>
+            <th>64</th><td class="w-64">000.000</td>
+          </tr>
+          <tr>
+            <th>128</th><td class="w-128">000.000</td>
+            <th>256</th><td class="w-256">000.000</td>
+            <th>512</th><td class="w-512">000.000</td>
+          </tr>
+          <tr>
+            <th>1024</th><td class="w-1024">000.000</td>
+            <th>2048</th><td class="w-2048">000.000</td>
+            <th>4096</th><td class="w-4096">000.000</td>
+          </tr>
+          <tr>
+            <th>8192</th><td class="w-8192">000.000</td>
+          </tr>
+        </table>
+      </div>
+    </script>
+
   </body>
 </html>
